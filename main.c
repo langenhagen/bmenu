@@ -103,7 +103,6 @@ struct app {
     size_t selected;
     size_t scroll;
 
-    bool should_print;
     const char *result;
 
     int32_t repeat_rate;
@@ -628,7 +627,6 @@ static void select_current(struct app *app)
         return;
     }
     app->result = app->items[app->matches[app->selected].index];
-    app->should_print = true;
     app->running = false;
 }
 
@@ -1219,7 +1217,7 @@ int main(void)
     }
 
     int exit_code = EXIT_CANCEL;
-    if (app.should_print && app.result != NULL) {
+    if (app.result != NULL) {
         printf("%s\n", app.result);
         fflush(stdout);
         exit_code = EXIT_OK;
