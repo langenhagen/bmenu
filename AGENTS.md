@@ -7,6 +7,7 @@ Repository-local rules for coding agents working on `bmenu`.
 - Keep `bmenu` tiny, fast to start, and keyboard-first.
 - Prioritize GNOME/Mutter Wayland behavior over broad feature scope.
 - Preserve dmenu-like scripting contract: stdin in, stdout selection out.
+- Avoid outright implementing guards/fallbacks
 
 ## Comment And Docstring Style
 
@@ -37,9 +38,10 @@ generated text.
 ## Build And Tooling
 
 - Prefer `make` targets for common workflows.
-- Keep Meson as the underlying build system.
+- Use Meson as the underlying build system.
 
 ## Safety
 
 - Never revert unrelated user changes.
 - Avoid destructive git commands unless explicitly asked.
+- Never commit.
