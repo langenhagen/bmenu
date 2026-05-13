@@ -1,4 +1,4 @@
-#define _POSIX_C_SOURCE 200809L
+#define _GNU_SOURCE
 /*
 Minimal stdin-driven Wayland menu.
 
@@ -121,25 +121,13 @@ static void die(const char *message)
     exit(EXIT_ERROR);
 }
 
-/* Create an anonymous shm file under XDG_RUNTIME_DIR. */
+/* Create an anonymous shm-backed fd via memfd_create. */
 static int create_shm_file(size_t size)
 {
-    const char *runtime_dir = getenv("XDG_RUNTIME_DIR");
-    if (runtime_dir == NULL) {
-        return -1;
-    }
-
-    char name[PATH_MAX];
-    int n = snprintf(name, sizeof name, "%s/bmenu-shm-XXXXXX", runtime_dir);
-    if (n < 0 || (size_t)n >= sizeof name) {
-        return -1;
-    }
-
-    int fd = mkstemp(name);
+    int fd = memfd_create("bmenu-shm", MFD_CLOEXEC);
     if (fd < 0) {
         return -1;
     }
-    unlink(name);
     if (ftruncate(fd, (off_t)size) < 0) {
         close(fd);
         return -1;
