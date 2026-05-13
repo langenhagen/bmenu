@@ -13,6 +13,7 @@ author: andreasl
 #include <pango/pangocairo.h>
 #include <ctype.h>
 #include <errno.h>
+#include <limits.h>
 #include <poll.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -124,32 +125,26 @@ static void die(const char *message)
 /* Create an anonymous shm file under XDG_RUNTIME_DIR. */
 static int create_shm_file(size_t size)
 {
-    static const char template_name[] = "/bmenu-shm-XXXXXX";
     const char *runtime_dir = getenv("XDG_RUNTIME_DIR");
-    char *name = NULL;
-    int fd;
-
     if (runtime_dir == NULL) {
         return -1;
     }
 
-    size_t len = strlen(runtime_dir) + sizeof(template_name);
-    name = malloc(len);
-    if (name == NULL) {
+    char name[PATH_MAX];
+    int n = snprintf(name, sizeof name, "%s/bmenu-shm-XXXXXX", runtime_dir);
+    if (n < 0 || (size_t)n >= sizeof name) {
         return -1;
     }
 
-    snprintf(name, len, "%s%s", runtime_dir, template_name);
-    fd = mkstemp(name);
-    if (fd >= 0) {
-        unlink(name);
-        if (ftruncate(fd, (off_t)size) < 0) {
-            close(fd);
-            fd = -1;
-        }
+    int fd = mkstemp(name);
+    if (fd < 0) {
+        return -1;
     }
-
-    free(name);
+    unlink(name);
+    if (ftruncate(fd, (off_t)size) < 0) {
+        close(fd);
+        return -1;
+    }
     return fd;
 }
 
