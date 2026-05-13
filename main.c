@@ -10,7 +10,9 @@ author: andreasl
 */
 
 #include <cairo/cairo.h>
-#include <pango/pangocairo.h>
+#include <cairo/cairo-ft.h>
+#include <ft2build.h>
+#include FT_FREETYPE_H
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
@@ -37,7 +39,8 @@ enum {
 
 #define BMENU_DEFAULT_WIDTH  1024
 #define BMENU_DEFAULT_HEIGHT 640
-#define BMENU_FONT           "Sans 12"
+#define BMENU_FONT_FILE      "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+#define BMENU_FONT_SIZE      16.0
 
 struct app;
 
@@ -112,6 +115,10 @@ struct app {
 
     struct output *outputs;
     size_t output_count;
+
+    FT_Library ft_library;
+    FT_Face ft_face;
+    cairo_font_face_t *cairo_face;
 };
 
 /* Print an error and terminate with EXIT_ERROR. */
@@ -119,6 +126,25 @@ static void die(const char *message)
 {
     fprintf(stderr, "%s\n", message);
     exit(EXIT_ERROR);
+}
+
+/* Load the menu font once into a cached cairo font face. */
+static void ensure_font(struct app *app)
+{
+    if (app->cairo_face != NULL) {
+        return;
+    }
+    if (FT_Init_FreeType(&app->ft_library) != 0) {
+        die("failed to initialize freetype");
+    }
+    if (FT_New_Face(app->ft_library, BMENU_FONT_FILE, 0, &app->ft_face) != 0) {
+        die("failed to load font: " BMENU_FONT_FILE);
+    }
+    app->cairo_face = cairo_ft_font_face_create_for_ft_face(app->ft_face, 0);
+    if (app->cairo_face == NULL
+        || cairo_font_face_status(app->cairo_face) != CAIRO_STATUS_SUCCESS) {
+        die("failed to create cairo font face");
+    }
 }
 
 /* Create an anonymous shm-backed fd via memfd_create. */
@@ -323,17 +349,20 @@ static void draw(struct app *app)
     cairo_rectangle(cr, 0.5, 0.5, app->width - 1.0, app->height - 1.0);
     cairo_stroke(cr);
 
-    PangoLayout *layout = pango_cairo_create_layout(cr);
-    PangoFontDescription *desc = pango_font_description_from_string(BMENU_FONT);
-    pango_layout_set_font_description(layout, desc);
-    pango_font_description_free(desc);
+    ensure_font(app);
 
     cairo_font_options_t *font_options = cairo_font_options_create();
     cairo_font_options_set_antialias(font_options, CAIRO_ANTIALIAS_GRAY);
     cairo_font_options_set_hint_style(font_options, CAIRO_HINT_STYLE_FULL);
     cairo_font_options_set_hint_metrics(font_options, CAIRO_HINT_METRICS_ON);
-    pango_cairo_context_set_font_options(pango_layout_get_context(layout), font_options);
+    cairo_set_font_options(cr, font_options);
     cairo_font_options_destroy(font_options);
+
+    cairo_set_font_face(cr, app->cairo_face);
+    cairo_set_font_size(cr, BMENU_FONT_SIZE);
+
+    cairo_font_extents_t fe;
+    cairo_font_extents(cr, &fe);
 
     const int input_y = 12;
     const int row_h = 26;
@@ -343,17 +372,16 @@ static void draw(struct app *app)
     ensure_visible(app, visible_rows);
 
     cairo_set_source_rgb(cr, 0.93, 0.94, 0.96);
-    pango_layout_set_text(layout, app->text, -1);
-    cairo_move_to(cr, padding_x, input_y);
-    pango_cairo_show_layout(cr, layout);
+    cairo_move_to(cr, padding_x, input_y + fe.ascent);
+    cairo_show_text(cr, app->text);
 
-    int text_w = 0;
-    int text_h = 0;
-    pango_layout_get_pixel_size(layout, &text_w, &text_h);
-    int caret_x = padding_x + text_w + 1;
+    cairo_text_extents_t te;
+    cairo_text_extents(cr, app->text, &te);
+    int caret_x = padding_x + (int)(te.x_advance + 0.5) + 1;
+    int caret_h = (int)(fe.height + 0.5);
     cairo_set_source_rgb(cr, 0.65, 0.69, 0.75);
     cairo_move_to(cr, caret_x + 0.5, input_y);
-    cairo_line_to(cr, caret_x + 0.5, input_y + (text_h > 0 ? text_h : 18));
+    cairo_line_to(cr, caret_x + 0.5, input_y + (caret_h > 0 ? caret_h : 18));
     cairo_stroke(cr);
 
     cairo_set_source_rgb(cr, 0.20, 0.22, 0.25);
@@ -375,12 +403,10 @@ static void draw(struct app *app)
         }
 
         cairo_set_source_rgb(cr, 0.93, 0.94, 0.96);
-        pango_layout_set_text(layout, app->items[app->matches[mi].index], -1);
-        cairo_move_to(cr, padding_x, y + 2);
-        pango_cairo_show_layout(cr, layout);
+        cairo_move_to(cr, padding_x, y + 2 + fe.ascent);
+        cairo_show_text(cr, app->items[app->matches[mi].index]);
     }
 
-    g_object_unref(layout);
     cairo_destroy(cr);
     cairo_surface_flush(surface);
     cairo_surface_destroy(surface);
@@ -1042,6 +1068,16 @@ static void cleanup(struct app *app)
     }
     if (app->display != NULL) {
         wl_display_disconnect(app->display);
+    }
+
+    if (app->cairo_face != NULL) {
+        cairo_font_face_destroy(app->cairo_face);
+    }
+    if (app->ft_face != NULL) {
+        FT_Done_Face(app->ft_face);
+    }
+    if (app->ft_library != NULL) {
+        FT_Done_FreeType(app->ft_library);
     }
 
     free_items(app);

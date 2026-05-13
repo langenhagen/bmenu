@@ -14,7 +14,7 @@ deps = [
     dependency('wayland-protocols'),
     dependency('xkbcommon'),
     dependency('cairo'),
-    dependency('pangocairo'),
+    dependency('freetype2'),
 ]
 
 wayland_scanner = find_program('wayland-scanner')
