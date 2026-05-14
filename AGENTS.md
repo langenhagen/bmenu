@@ -7,7 +7,7 @@ Repository-local rules for coding agents working on `bmenu`.
 - Keep `bmenu` tiny, fast to start, and keyboard-first.
 - Prioritize GNOME/Mutter Wayland behavior over broad feature scope.
 - Preserve dmenu-like scripting contract: stdin in, stdout selection out.
-- Avoid outright implementing guards/fallbacks
+- Avoid implementing guards/fallbacks unless explicitly requested.
 
 ## Comment And Docstring Style
 

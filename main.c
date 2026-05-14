@@ -903,7 +903,7 @@ static void keyboard_repeat_info(void *data,
     }
 }
 
-/* enter/leave are required by the listener but intentionally no-op. */
+/* Wayland keyboard event listener. */
 static const struct wl_keyboard_listener keyboard_listener = {
     .keymap = keyboard_keymap,
     .enter = keyboard_enter,
@@ -926,10 +926,9 @@ static void seat_capabilities(void *data, struct wl_seat *seat, uint32_t capabil
     }
 }
 
-/* Required callback; seat name events are ignored. */
+/* Required callback; seat name is not used. */
 static void seat_name(void *data, struct wl_seat *seat, const char *name)
 {
-    /* Required callback; seat name not used. */
     (void)data;
     (void)seat;
     (void)name;
@@ -978,7 +977,7 @@ static void registry_global(void *data,
     }
 }
 
-/* Required callback; globals are not dynamically removed here. */
+/* Drop tracked wl_output when the compositor removes it. */
 static void registry_global_remove(void *data, struct wl_registry *registry, uint32_t name)
 {
     struct app *app = data;

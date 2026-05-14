@@ -18,7 +18,7 @@ typing, and prints the selected value to `stdout`.
 ```text
 .
 ├── AGENTS.md               Repository-local agent rules.
-├── explore-with-bmenu.sh   Sample app; a imple file explorer using bmenu.
+├── explore-with-bmenu.sh   Sample app; a simple file explorer using bmenu.
 ├── LICENSE                 License file.
 ├── main.c                  Main program.
 ├── Makefile                Minimal build/run/test shortcuts.
@@ -28,11 +28,11 @@ typing, and prints the selected value to `stdout`.
 ```
 
 ## Dependencies
-On Ubuntu:
+On Ubuntu 26:
 ```bash
-sudo apt install meson ninja-build pkg-config \
+sudo apt install meson ninja-build pkg-config libwayland-bin \
   libwayland-dev wayland-protocols libxkbcommon-dev \
-  libcairo2-dev libpango1.0-dev
+  libcairo2-dev libfreetype-dev
 ```
 
 ## Build
@@ -56,7 +56,7 @@ The selected value is printed to stdout; on cancel or error, `bmenu` exits non-z
 - `BackSpace` - delete previous character.
 - `Ctrl+W` - delete previous word.
 - `Ctrl+U` - clear the query.
-- `PgUp`/`PgDn` jump up/down.
+- `PgUp` / `PgDn` - jump up/down.
 
 ## Quick Test
 ```bash
