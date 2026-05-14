@@ -498,8 +498,6 @@ static const struct wl_output_listener output_listener = {
     .mode = output_mode,
     .done = output_done,
     .scale = output_scale,
-    .name = NULL,
-    .description = NULL,
 };
 
 /* Reply to compositor ping to keep client responsive. */
@@ -556,8 +554,6 @@ static void toplevel_close(void *data, struct xdg_toplevel *xdg_toplevel)
 static const struct xdg_toplevel_listener toplevel_listener = {
     .configure = toplevel_configure,
     .close = toplevel_close,
-    .configure_bounds = NULL,
-    .wm_capabilities = NULL,
 };
 
 /* Load xkb keymap and rebuild xkb state from compositor data. */
@@ -612,7 +608,6 @@ static void keyboard_enter(void *data,
                            struct wl_surface *surface,
                            struct wl_array *keys)
 {
-    /* Required callback; no state needed. */
     (void)data;
     (void)keyboard;
     (void)serial;
