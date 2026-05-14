@@ -15,7 +15,6 @@ author: andreasl
 #include FT_FREETYPE_H
 #include <ctype.h>
 #include <errno.h>
-#include <limits.h>
 #include <poll.h>
 #include <stdbool.h>
 #include <stdint.h>
