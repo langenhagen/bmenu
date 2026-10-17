@@ -283,6 +283,7 @@ static int compare_matches(const void *a, const void *b)
 /* Rebuild and sort match list from current query text. */
 static void recompute_matches(struct app *app)
 {
+    if (app == NULL) return;
     app->match_count = 0;
     for (size_t i = 0; i < app->item_count; i++) {
         int score = fuzzy_score(app->text, app->items[i]);
@@ -420,6 +421,7 @@ static void draw(struct app *app)
 /* Recompute app scale from known outputs (pick highest scale). */
 static void recompute_scale(struct app *app)
 {
+    if (app == NULL) return;
     int scale = 1;
     for (size_t i = 0; i < app->output_count; i++) {
         if (app->outputs[i].scale > scale) {
@@ -481,6 +483,7 @@ static void output_scale(void *data, struct wl_output *wl_output, int32_t factor
 {
     struct output *output = data;
     struct app *app = output->app;
+    if (app == NULL) return;
     (void)wl_output;
     if (factor < 1) {
         factor = 1;
@@ -1137,7 +1140,6 @@ int main(void)
 
     app.registry = wl_display_get_registry(app.display);
     wl_registry_add_listener(app.registry, &registry_listener, &app);
-    wl_display_roundtrip(app.display);
     wl_display_roundtrip(app.display);
     recompute_scale(&app);
 
